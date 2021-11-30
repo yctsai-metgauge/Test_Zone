@@ -1,0 +1,10 @@
+-IC:\Strawberry\c\lib\gcc\i686-w64-mingw32\4.9.2\include
+-IC:\Strawberry\c\include
+-IC:\Strawberry\c\lib\gcc\i686-w64-mingw32\4.9.2\include-fixed
+-IC:\Strawberry\c\i686-w64-mingw32\include
+-IC:\Strawberry\c\i686-w64-mingw32\include\c++
+-IC:\Strawberry\c\i686-w64-mingw32\include\c++\i686-w64-mingw32
+-IC:\Strawberry\c\i686-w64-mingw32\include\c++\backward
+-IC:\Users\user\Documents\Test\CppTest\CppTest\CppTest
+-target
+i686-pc-windows-gnu
