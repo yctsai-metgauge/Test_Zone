@@ -2,10 +2,12 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string>
-
+#define PORT 1001
 #include <chrono>
 #include <thread>
 #include <time.h>
@@ -57,6 +59,35 @@ void parse_format2Tibbo(char *outStr,float num, int max_digit_after_dot=3, int t
 
 int main()
 {
+
+    int sock = 0, valread;
+    struct sockaddr_in serv_addr;
+    // const char *hello;
+    char buffer[1024] = {0};
+
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        printf("\n Socket creation error \n");
+        return -1;
+    }
+   
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+       
+    // Convert IPv4 and IPv6 addresses from text to binary form
+    if(inet_pton(AF_INET, "192.168.50.88", &serv_addr.sin_addr)<=0) 
+    {
+        printf("\nInvalid address/ Address not supported \n");
+        return -1;
+    }
+   
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        printf("\nConnection Failed \n");
+        return -1;
+    }
+
+
     char c; // to eat the commas
 
     float LDX, LDY, z;
@@ -75,7 +106,8 @@ int main()
 
     char hello[6];
     parse_format2Tibbo(hello, 3.688,3,6);
-    std::cout<<hello<<std::endl;
-    
+
+    send(sock , hello , strlen(hello) , 0 );
+    std::cout<<"data sent: "<<std::endl;
     return 0;
 }
