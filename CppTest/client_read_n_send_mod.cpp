@@ -60,32 +60,32 @@ void parse_format2Tibbo(char *outStr,float num, int max_digit_after_dot=3, int t
 int main()
 {
 
-    // int sock = 0, valread;
-    // struct sockaddr_in serv_addr;
-    // // const char *hello;
-    // char buffer[1024] = {0};
+    int sock = 0, valread;
+    struct sockaddr_in serv_addr;
+    // const char *hello;
+    char buffer[1024] = {0};
 
-    // if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    // {
-    //     printf("\n Socket creation error \n");
-    //     return -1;
-    // }
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        printf("\n Socket creation error \n");
+        return -1;
+    }
    
-    // serv_addr.sin_family = AF_INET;
-    // serv_addr.sin_port = htons(PORT);
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
        
-    // // Convert IPv4 and IPv6 addresses from text to binary form
-    // if(inet_pton(AF_INET, "192.168.50.88", &serv_addr.sin_addr)<=0) 
-    // {
-    //     printf("\nInvalid address/ Address not supported \n");
-    //     return -1;
-    // }
+    // Convert IPv4 and IPv6 addresses from text to binary form
+    if(inet_pton(AF_INET, "192.168.50.88", &serv_addr.sin_addr)<=0) 
+    {
+        printf("\nInvalid address/ Address not supported \n");
+        return -1;
+    }
    
-    // if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    // {
-    //     printf("\nConnection Failed \n");
-    //     return -1;
-    // }
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        printf("\nConnection Failed \n");
+        return -1;
+    }
 
 
     char c; // to eat the commas
@@ -93,7 +93,7 @@ int main()
     float LDX, LDY, z;
     std::vector<float> LDX_Vec, LDY_Vec;
     int data_size{0};
-    std::ifstream file("sample_data.csv");
+    std::ifstream file("ar_19_5mm_20211112085324_394_raw.csv");
     std::string line;
 
     while (std::getline(file, line)) {
@@ -104,19 +104,53 @@ int main()
         data_size++;
     }
 
-    char send2Tibbo[12];
     char LDX_char[6],LDY_char[6];
-    int ctr{0};
-    // for(int i = 0; i < data_size; i++){
-    while(ctr<data_size){
-        parse_format2Tibbo(LDX_char, LDX_Vec.at(ctr), 3, 6);
-        parse_format2Tibbo(LDY_char, LDY_Vec.at(ctr), 3, 6);
-        strcpy (send2Tibbo,LDX_char);
-        strcat (send2Tibbo,LDY_char);
-        std::cout<<"data sent: "<< send2Tibbo<<std::endl;
-    // send(sock , hello , strlen(hello) , 0 );
-        ctr++;
+    char send2Tibbo[12];
+    
+
+    double target_hz {800};
+    double target_msec {(1e+06/target_hz)};
+    int cali_msec {(int) target_msec};
+    int cali_cycle {1000};
+    // int ctr{0};
+
+
+    while (true){
+        double time_deviation_sum {0.0};
+        double time_deviation_avg {0.0};
+        double time_avg {0.0};
+        double shift {0.0};
+        double max_shift{0.0};
+        
+
+        for (int i = 0; i < cali_cycle; i++){
+
+            auto start_time = Clock::now();
+
+            std::this_thread::sleep_for(std::chrono::microseconds(cali_msec));
+            // microsleep(cali_msec);
+            // selectsleep(cali_msec);
+            parse_format2Tibbo(LDX_char, LDX_Vec.at(i%(data_size)), 3, 6);
+            parse_format2Tibbo(LDY_char, LDY_Vec.at(i%(data_size)), 3, 6);
+            strcpy (send2Tibbo,LDX_char);
+            strcat (send2Tibbo,LDY_char);
+            send(sock , send2Tibbo , strlen(send2Tibbo) , 0 );
+            auto end_time = Clock::now();
+            double dur_micro = std::chrono::duration<double, std::micro>(end_time - start_time).count();
+            // std::cout <<"Time difference:"<< dur_micro <<" microseconds" << std::endl;
+            time_avg += dur_micro;
+            time_deviation_sum+=(dur_micro-target_msec);
+
+        }
+        time_deviation_avg = time_deviation_sum / cali_cycle;
+        // myfile << time_deviation_avg << std::endl;
+        cali_msec = cali_msec - int (time_deviation_avg);
+        time_avg = time_avg / cali_cycle;
+        std::cout<< "avg_Hz: " << (1e+06/time_avg) << std::endl;
+        // ctr++;
     }
- 
+
+
+
     return 0;
 }
