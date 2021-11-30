@@ -46,7 +46,7 @@ void parse_format2Tibbo(char *outStr,float num, int max_digit_after_dot=3, int t
     }
     
     sprintf(outStr,sprintf_format,num);
-    std::cout<<"parse_format2Tibbo: "<<outStr<<std::endl;
+    // std::cout<<"parse_format2Tibbo: "<<outStr<<std::endl;
 
     // std::string string_num = std::to_string(num);
     // std::cout<<string_num<<std::endl;
@@ -60,39 +60,39 @@ void parse_format2Tibbo(char *outStr,float num, int max_digit_after_dot=3, int t
 int main()
 {
 
-    int sock = 0, valread;
-    struct sockaddr_in serv_addr;
-    // const char *hello;
-    char buffer[1024] = {0};
+    // int sock = 0, valread;
+    // struct sockaddr_in serv_addr;
+    // // const char *hello;
+    // char buffer[1024] = {0};
 
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    {
-        printf("\n Socket creation error \n");
-        return -1;
-    }
+    // if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    // {
+    //     printf("\n Socket creation error \n");
+    //     return -1;
+    // }
    
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
+    // serv_addr.sin_family = AF_INET;
+    // serv_addr.sin_port = htons(PORT);
        
-    // Convert IPv4 and IPv6 addresses from text to binary form
-    if(inet_pton(AF_INET, "192.168.50.88", &serv_addr.sin_addr)<=0) 
-    {
-        printf("\nInvalid address/ Address not supported \n");
-        return -1;
-    }
+    // // Convert IPv4 and IPv6 addresses from text to binary form
+    // if(inet_pton(AF_INET, "192.168.50.88", &serv_addr.sin_addr)<=0) 
+    // {
+    //     printf("\nInvalid address/ Address not supported \n");
+    //     return -1;
+    // }
    
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-    {
-        printf("\nConnection Failed \n");
-        return -1;
-    }
+    // if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    // {
+    //     printf("\nConnection Failed \n");
+    //     return -1;
+    // }
 
 
     char c; // to eat the commas
 
     float LDX, LDY, z;
     std::vector<float> LDX_Vec, LDY_Vec;
-
+    int data_size{0};
     std::ifstream file("sample_data.csv");
     std::string line;
 
@@ -101,13 +101,22 @@ int main()
         ss >> LDX >> c >> LDY;
         LDX_Vec.push_back(LDX);
         LDY_Vec.push_back(LDY);
+        data_size++;
     }
 
-
-    char hello[6];
-    parse_format2Tibbo(hello, 3.688,3,6);
-
-    send(sock , hello , strlen(hello) , 0 );
-    std::cout<<"data sent: "<<std::endl;
+    char send2Tibbo[12];
+    char LDX_char[6],LDY_char[6];
+    int ctr{0};
+    // for(int i = 0; i < data_size; i++){
+    while(ctr<data_size){
+        parse_format2Tibbo(LDX_char, LDX_Vec.at(ctr), 3, 6);
+        parse_format2Tibbo(LDY_char, LDY_Vec.at(ctr), 3, 6);
+        strcpy (send2Tibbo,LDX_char);
+        strcat (send2Tibbo,LDY_char);
+        std::cout<<"data sent: "<< send2Tibbo<<std::endl;
+    // send(sock , hello , strlen(hello) , 0 );
+        ctr++;
+    }
+ 
     return 0;
 }
