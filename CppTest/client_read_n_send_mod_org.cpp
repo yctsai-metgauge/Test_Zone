@@ -5,15 +5,14 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <string>
+#define PORT 1001
 #include <chrono>
 #include <thread>
 #include <time.h>
 #include <unistd.h>
 #include <bits/stdc++.h>
-#include "iniparser.h"
 // #include <fstream>
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -60,45 +59,7 @@ void parse_format2Tibbo(char *outStr,float num, int max_digit_after_dot=3, int t
 
 int main()
 {
-    // --------------read ini----------------
-    dictionary *ini;
 
-    ini = iniparser_load("simulator.ini");//parser the file
-
-    if(ini == NULL)
-
-    {
-
-        fprintf(stderr,"can not open %s","simulator.ini");
-
-        exit(EXIT_FAILURE);
-
-    }
-    const char *tibbo_ip;
-    tibbo_ip = iniparser_getstring(ini,"TCP_SETTING:ip","null");
-    std::cout << tibbo_ip << '\n';
-    printf("tibbo ip : %s\n",tibbo_ip);
-
-    int port{0};
-    port = iniparser_getint(ini,"TCP_SETTING:port",-1);
-    printf("port : %d\n",port);
-
-    double target_hz{0.0};
-    target_hz = iniparser_getdouble(ini,"TRIGGER_SETTING:target_hz",-1);
-    printf("target_hz : %.1f\n",target_hz);
-
-    int cali_cycle{0};
-    cali_cycle = iniparser_getint(ini,"TRIGGER_SETTING:cali_cycle",-1);
-    printf("cali_cycle : %d\n",cali_cycle);
-
-    const char *file_path;
-    file_path = iniparser_getstring(ini,"FILE_SETTING:file_path","null");
-    printf("file_path : %s\n",file_path);
-    
-       
-    
-    // ----------end read ini----------------
-    // ---------------socket-----------------
     int sock = 0, valread;
     struct sockaddr_in serv_addr;
     // const char *hello;
@@ -111,11 +72,10 @@ int main()
     }
    
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(port);
+    serv_addr.sin_port = htons(PORT);
        
     // Convert IPv4 and IPv6 addresses from text to binary form
-    
-    if(inet_pton(AF_INET, tibbo_ip, &serv_addr.sin_addr)<=0) 
+    if(inet_pton(AF_INET, "192.168.50.88", &serv_addr.sin_addr)<=0) 
     {
         printf("\nInvalid address/ Address not supported \n");
         return -1;
@@ -126,15 +86,14 @@ int main()
         printf("\nConnection Failed \n");
         return -1;
     }
-    // --------------end socket----------------
 
-    // --------------read csv------------------
+
     char c; // to eat the commas
 
     float LDX, LDY, z;
     std::vector<float> LDX_Vec, LDY_Vec;
     int data_size{0};
-    std::ifstream file(file_path);
+    std::ifstream file("ar_19_5mm_20211112085324_394_raw.csv");
     std::string line;
 
     while (std::getline(file, line)) {
@@ -148,11 +107,12 @@ int main()
     char LDX_char[6],LDY_char[6];
     char send2Tibbo[12];
     
-    // ----------end read csv------------------
 
-
+    double target_hz {800};
     double target_msec {(1e+06/target_hz)};
     int cali_msec {(int) target_msec};
+    int cali_cycle {1000};
+    // int ctr{0};
 
 
     while (true){
@@ -191,6 +151,6 @@ int main()
     }
 
 
-    iniparser_freedict(ini);//free dirctionary obj
+
     return 0;
 }
