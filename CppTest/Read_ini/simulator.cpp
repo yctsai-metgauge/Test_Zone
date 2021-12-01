@@ -34,7 +34,7 @@ int main(void)
     const char *tibbo_ip;
     tibbo_ip = iniparser_getstring(ini,"TCP_SETTING:ip","null");
     printf("ip : %s\n",tibbo_ip);
-    printf("ip len : %d\n",strlen(tibbo_ip));
+    // printf("ip len : %d\n",strlen(tibbo_ip));
     
 
     int port{0};
