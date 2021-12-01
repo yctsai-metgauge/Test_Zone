@@ -13,17 +13,13 @@ int main(void)
 
     dictionary *ini;
 
-    int n = 0;
-
-    const char *str;
-
-    ini = iniparser_load("example.ini");//parser the file
+    ini = iniparser_load("simulator.ini");//parser the file
 
     if(ini == NULL)
 
     {
 
-        fprintf(stderr,"can not open %s","example.ini");
+        fprintf(stderr,"can not open %s","simulator.ini");
 
         exit(EXIT_FAILURE);
 
@@ -35,13 +31,25 @@ int main(void)
 
     printf("\n%s:\n",iniparser_getsecname(ini,0));//get section name
 
-    n = iniparser_getint(ini,"tcp:port",-1);
+    const char *tibbo_ip;
+    tibbo_ip = iniparser_getstring(ini,"TCP_SETTING:ip","null");
+    printf("ip : %s\n",tibbo_ip);
 
-    printf("port : %d\n",n);
+    int port{0};
+    port = iniparser_getint(ini,"TCP_SETTING:port",-1);
+    printf("port : %d\n",port);
 
-    str = iniparser_getstring(ini,"tcp:ip","null");
+    double target_hz{0.0};
+    target_hz = iniparser_getdouble(ini,"TRIGGER_SETTING:target_hz",-1);
+    printf("target_hz : %.1f\n",target_hz);
 
-    printf("ip : %s\n",str);
+    int cali_cycle{0};
+    cali_cycle = iniparser_getint(ini,"TRIGGER_SETTING:cali_cycle",-1);
+    printf("cali_cycle : %d\n",cali_cycle);
+
+    const char *file_path;
+    file_path = iniparser_getstring(ini,"FILE_SETTING:file_path","null");
+    printf("file_path : %s\n",file_path);
 
     iniparser_freedict(ini);//free dirctionary obj
 
