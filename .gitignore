@@ -33,3 +33,6 @@
 
 # external file
 *.csv
+
+# vscode environment
+.vscode
