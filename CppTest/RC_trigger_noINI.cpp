@@ -109,7 +109,7 @@ int main()
     float LD1, LD2, LD3, LD4, LD5, LD6;
     std::vector<float> LD1_Vec, LD2_Vec, LD3_Vec, LD4_Vec, LD5_Vec, LD6_Vec;
     int data_size{0};
-    std::ifstream file("sample_data_RC.csv");
+    std::ifstream file("_ar_210714-13_210715_1842_175_mod.csv");
     std::string line;
     char LD1_char[6],LD2_char[6],LD3_char[6],LD4_char[6],LD5_char[6],LD6_char[6],Offset_empty[6]={0x30,0x30,0x30,0x30,0x30,0x30};
     char send2Tibbo_M[36],send2Tibbo_S[36];
@@ -124,63 +124,66 @@ int main()
         LD6_Vec.push_back(LD6);
         data_size++;
     }
-    
+    std::cout<< "data size: " << (data_size) << std::endl;
     double target_hz {800};
     double target_msec {(1e+06/target_hz)};
     int cali_msec {(int) target_msec};
     int cali_cycle {1000};
-    // int ctr{0};
+    int ctr{0};
 
+    double time_deviation_sum {0.0};
+    double time_deviation_avg {0.0};
+    double time_avg {0.0};
 
-    while (true){
-        double time_deviation_sum {0.0};
-        double time_deviation_avg {0.0};
-        double time_avg {0.0};
-        double shift {0.0};
-        double max_shift{0.0};
-        
+    while (ctr < data_size){
 
-        for (int i = 0; i < cali_cycle; i++){
+        auto start_time = Clock::now();
 
-            auto start_time = Clock::now();
+        std::this_thread::sleep_for(std::chrono::microseconds(cali_msec));
+        // microsleep(cali_msec);
+        // selectsleep(cali_msec);
+        parse_format2Tibbo(LD1_char, LD1_Vec.at(ctr), 3, 6);
+        parse_format2Tibbo(LD2_char, LD2_Vec.at(ctr), 3, 6);
+        parse_format2Tibbo(LD3_char, LD3_Vec.at(ctr), 3, 6);
+        parse_format2Tibbo(LD4_char, LD4_Vec.at(ctr), 3, 6);
+        parse_format2Tibbo(LD5_char, LD5_Vec.at(ctr), 3, 6);
+        parse_format2Tibbo(LD6_char, LD6_Vec.at(ctr), 3, 6);
+        strcpy (send2Tibbo_M,LD1_char);
+        strcat (send2Tibbo_M,Offset_empty);
+        strcat (send2Tibbo_M,LD2_char);
+        strcat (send2Tibbo_M,Offset_empty);
+        strcat (send2Tibbo_M,LD3_char);
+        strcat (send2Tibbo_M,Offset_empty);
+        strcpy (send2Tibbo_S,LD4_char);
+        strcat (send2Tibbo_S,Offset_empty);
+        strcat (send2Tibbo_S,LD5_char);
+        strcat (send2Tibbo_S,Offset_empty);
+        strcat (send2Tibbo_S,LD6_char);
+        strcat (send2Tibbo_S,Offset_empty);
 
-            std::this_thread::sleep_for(std::chrono::microseconds(cali_msec));
-            // microsleep(cali_msec);
-            // selectsleep(cali_msec);
-            parse_format2Tibbo(LD1_char, LD1_Vec.at(i%(data_size)), 3, 6);
-            parse_format2Tibbo(LD2_char, LD2_Vec.at(i%(data_size)), 3, 6);
-            parse_format2Tibbo(LD3_char, LD3_Vec.at(i%(data_size)), 3, 6);
-            parse_format2Tibbo(LD4_char, LD4_Vec.at(i%(data_size)), 3, 6);
-            parse_format2Tibbo(LD5_char, LD5_Vec.at(i%(data_size)), 3, 6);
-            parse_format2Tibbo(LD6_char, LD6_Vec.at(i%(data_size)), 3, 6);
-            strcpy (send2Tibbo_M,LD1_char);
-            strcat (send2Tibbo_M,Offset_empty);
-            strcat (send2Tibbo_M,LD2_char);
-            strcat (send2Tibbo_M,Offset_empty);
-            strcat (send2Tibbo_M,LD3_char);
-            strcat (send2Tibbo_M,Offset_empty);
-            strcpy (send2Tibbo_S,LD4_char);
-            strcat (send2Tibbo_S,Offset_empty);
-            strcat (send2Tibbo_S,LD5_char);
-            strcat (send2Tibbo_S,Offset_empty);
-            strcat (send2Tibbo_S,LD6_char);
-            strcat (send2Tibbo_S,Offset_empty);
+        send(sock_M , send2Tibbo_M , strlen(send2Tibbo_M) , 0 );
+        send(sock_S , send2Tibbo_S , strlen(send2Tibbo_S) , 0 );
+        auto end_time = Clock::now();
+        double dur_micro = std::chrono::duration<double, std::micro>(end_time - start_time).count();
+        // std::cout <<"Time difference:"<< dur_micro <<" microseconds" << std::endl;
+        time_avg += dur_micro;
+        time_deviation_sum+=(dur_micro-target_msec);
 
-            send(sock_M , send2Tibbo_M , strlen(send2Tibbo_M) , 0 );
-            send(sock_S , send2Tibbo_S , strlen(send2Tibbo_S) , 0 );
-            auto end_time = Clock::now();
-            double dur_micro = std::chrono::duration<double, std::micro>(end_time - start_time).count();
-            // std::cout <<"Time difference:"<< dur_micro <<" microseconds" << std::endl;
-            time_avg += dur_micro;
-            time_deviation_sum+=(dur_micro-target_msec);
+        if (ctr % cali_cycle == cali_cycle-1){
+            time_deviation_avg = time_deviation_sum / cali_cycle;
+            // myfile << time_deviation_avg << std::endl;
+            cali_msec = cali_msec - int (time_deviation_avg*0.5);
+            time_avg = time_avg / cali_cycle;
+            std::cout<< "avg_Hz: " << (1e+06/time_avg) << std::endl;
+            time_deviation_sum = 0.0;
+            time_deviation_avg = 0.0;
+            time_avg = 0.0;
 
         }
-        time_deviation_avg = time_deviation_sum / cali_cycle;
-        // myfile << time_deviation_avg << std::endl;
-        cali_msec = cali_msec - int (time_deviation_avg*0.5);
-        time_avg = time_avg / cali_cycle;
-        std::cout<< "avg_Hz: " << (1e+06/time_avg) << std::endl;
-        // ctr++;
+        
+        ctr++;
+        if (ctr == data_size) ctr=0;
+
     }
 
 
