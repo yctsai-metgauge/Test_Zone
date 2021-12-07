@@ -174,7 +174,7 @@ int main()
     float LD1, LD2, LD3, LD4, LD5, LD6;
     std::vector<float> LD1_Vec, LD2_Vec, LD3_Vec, LD4_Vec, LD5_Vec, LD6_Vec;
     int data_size{0};
-    std::ifstream file("_ar_210714-13_210715_1842_175_mod.csv");
+    std::ifstream file(file_path);
     std::string line;
     char LD1_char[6],LD2_char[6],LD3_char[6],LD4_char[6],LD5_char[6],LD6_char[6],Offset_empty[6]={0x30,0x30,0x30,0x30,0x30,0x30};
     char send2Tibbo_M[36],send2Tibbo_S[36];
@@ -217,10 +217,12 @@ int main()
     double time_deviation_sum {0.0};
     double time_deviation_avg {0.0};
     double time_avg {0.0};    
-
+    auto start_time = Clock::now();
+    auto end_time = Clock::now();
+    double dur_micro{0.0};
     while (ctr < data_size){
 
-        auto start_time = Clock::now();
+        start_time = Clock::now();
 
         std::this_thread::sleep_for(std::chrono::microseconds(cali_msec));
         // microsleep(cali_msec);
@@ -256,8 +258,8 @@ int main()
         }
                 
 
-        auto end_time = Clock::now();
-        double dur_micro = std::chrono::duration<double, std::micro>(end_time - start_time).count();
+        end_time = Clock::now();
+        dur_micro = std::chrono::duration<double, std::micro>(end_time - start_time).count();
         // std::cout <<"Time difference:"<< dur_micro <<" microseconds" << std::endl;
         time_avg += dur_micro;
         time_deviation_sum+=(dur_micro-target_msec);
